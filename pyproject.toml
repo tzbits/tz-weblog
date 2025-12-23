@@ -7,6 +7,7 @@ name = "tz-weblog"
 version = "0.0.1"
 description = "static site generator from markdown files."
 authors = [{ name="tzbits", email="tzbits@proton.me" }]
+license = { file = "LICENSE" }
 dependencies = [
   "PyYAML",
   "markdown",

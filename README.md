@@ -54,21 +54,24 @@ Options:
 
 ## Example
 
-Generate a simple blog index and its corresponding pages:
+Generate a simple blog index and its corresponding pages.
 
-1. Create a Metadata-rich Markdown file (`page1.md`): `--- title: Page One author: tzbits date: 2025-12-19 ... # ${title} This is page one.`
+Create a Metadata-rich Markdown files (e.g. `page1.md`, `page2.md`, etc.):
 
-**2. Build the Site:**
+```
+---
+title: Page One
+author: tzbits
+date: 2025-12-19
+...
+# ${title}
 
-```````
-# Generate the index feed
-ls *.md | sort -r | xargs weblog make-feed \
-    --site-yaml site.yaml \
-    --page-template index.in.html \
-    --items-template items.in.html \
-    --item-template item.in.html \
-    -o output/index.html
+This is page one.
+```
 
+Build the Site:
+
+```
 # Generate individual HTML pages
 weblog md2html \
     --site-yaml site.yaml \
@@ -76,4 +79,11 @@ weblog md2html \
     -o output/ \
     *.md
 
-```````
+# Generate the index feed
+ls *.md | sort -r | xargs weblog make-feed \
+    --site-yaml site.yaml \
+    --page-template index.in.html \
+    --items-template items.in.html \
+    --item-template item.in.html \
+    -o output/index.html
+```

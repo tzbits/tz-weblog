@@ -1,3 +1,4 @@
+# Copyright 2025 tzbits.com
 """A CLI tool to manage static site content and feeds."""
 
 import pathlib
