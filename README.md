@@ -2,6 +2,44 @@
 
 `tz-weblog` is a command-line interface (CLI) utility designed for the management of static site content. It facilitates the transformation of Markdown source files into HTML and the generation of aggregate index feeds. The tool utilizes PEP 292 string templates for variable substitution and extracts metadata from YAML frontmatter.
 
+## Example
+
+### 1. Define Source Content (`post_01.md`)
+
+```yaml
+---
+title: Introduction to tz-weblog
+author: tzbits
+date: 2026-01-13
+...
+# ${title}
+
+Content authored by ${author}.
+
+```
+
+### 2. Run tz-weblog
+
+```bash
+# Generate HTML pages
+weblog md2html \
+    --site-yaml config.yaml \
+    --page-template page.in.html \
+    --body-template article.in.html \
+    --output-dir ./dist \
+    content/*.md
+
+# Generate the index feed
+weblog make-feed \
+    --site-yaml config.yaml \
+    --page-template page.in.html \
+    --items-template index_wrapper.in.html \
+    --item-template index_item.in.html \
+    --output ./dist/index.html \
+    content/*.md
+
+```
+
 ## Installation
 
 The following dependencies are required:
@@ -10,7 +48,7 @@ The following dependencies are required:
 * `Markdown` (Markdown-to-HTML conversion)
 * `PyYAML` (Metadata parsing)
 
-Install the dependencies via `pip` from the tz-weblog directory:
+Install the `weblog` tool and dependencies via `pip` from the tz-weblog directory:
 
 ```bash
 pip install .
@@ -85,40 +123,4 @@ The `md2html` command binds sequential navigation variables that can be used in 
 Note: The navigation logic uses modulo arithmetic, meaning the sequence wraps around (the last item links forward to the first item, and the first item links back to the last).
 
 
-## Example
 
-### 1. Define Source Content (`post_01.md`)
-
-```yaml
----
-title: Introduction to tz-weblog
-author: tzbits
-date: 2026-01-13
-...
-# ${title}
-
-Content authored by ${author}.
-
-```
-
-### 2. Run tz-weblog
-
-```bash
-# Generate HTML pages
-weblog md2html \
-    --site-yaml config.yaml \
-    --page-template page.in.html \
-    --body-template article.in.html \
-    --output-dir ./dist \
-    content/*.md
-
-# Generate the index feed
-weblog make-feed \
-    --site-yaml config.yaml \
-    --page-template page.in.html \
-    --items-template index_wrapper.in.html \
-    --item-template index_item.in.html \
-    --output ./dist/index.html \
-    content/*.md
-
-```
