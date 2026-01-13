@@ -1,89 +1,124 @@
 # tz-weblog
 
-A lightweight Python CLI tool for managing static site content and feeds. It transforms Markdown files into HTML and generates aggregate index pages using PEP 292 string templates and YAML metadata.
+`tz-weblog` is a command-line interface (CLI) utility designed for the management of static site content. It facilitates the transformation of Markdown source files into HTML and the generation of aggregate index feeds. The tool utilizes PEP 292 string templates for variable substitution and extracts metadata from YAML frontmatter.
 
-## Overview
+## Installation
 
-`tz-weblog` provides two primary commands to build a static website:
+The following dependencies are required:
 
-- md2html: Converts individual Markdown files into HTML pages
-- make-feed: Aggregates multiple Markdown files into a single index or feed page (like a blog home page).
+* `Click` (CLI framework)
+* `Markdown` (Markdown-to-HTML conversion)
+* `PyYAML` (Metadata parsing)
+
+Install the dependencies via `pip` from the tz-weblog directory:
+
+```bash
+pip install .
+
+```
+
+## Templating Model
+
+The tool employs a hierarchical substitution model. Templates use the `${variable}` syntax. Variables are resolved from the following sources in increasing order of precedence:
+
+1. Global Configuration: Key-value pairs provided via the `--site-yaml` option.
+2. File Metadata: YAML frontmatter extracted from the Markdown source.
+3. Computed Variables: Runtime-specific data such as navigation links.
+
+### Templating Hierarchy for `md2html` command
+
+* Page Template: The global layout. Must contain a `${body}` placeholder.
+* Body Template: The article-specific layout. Must contain a `${content}` placeholder.
+* Content: The HTML rendered from the Markdown source.
+
+### Templating Hierarchy for `make-feed` command
+
+* Page Template: The global layout. Must contain a `${body}` placeholder.
+* Items Template: The container for the feed list. Must contain an `${items}` placeholder.
+* Item Template: The layout for individual entries, mapped to the metadata of each source file (title, date, author, etc.).
 
 ## Usage
 
-### 1. Convert Markdown to HTML
+### Converting Markdown to HTML
+
+The `md2html` command processes Markdown files and outputs individual HTML pages.
+
+```bash
+weblog md2html [OPTIONS] FILENAMES...
 
 ```
-Usage: weblog md2html [OPTIONS] [FILENAMES]...
-
-  Convert markdown files to html files.
 
 Options:
-  --site-yaml PATH            Path to the global site configuration YAML.
-  --page-template PATH        Path to a page template with a ${body}
-                              placeholder.
-  -o, --output-dir DIRECTORY  Directory where HTML files will be saved.
-  --help                      Show this message and exit.
+
+* `--site-yaml`: Path to global configuration variables
+* `--page-template`: Path to the outer template around `${body}`
+* `--body-template`: Path to the inner `${content}` wrapper
+* `-o, --output-dir`: Target directory for generated HTML files
+
+### Generating an Index Feed
+
+Use the `make-feed` command to aggregate metadata from multiple Markdown files into a single index file.
+
+```bash
+weblog make-feed [OPTIONS] FILENAMES...
 
 ```
 
-`--site-yaml` contains global variables (e.g., sitetitle).
-
-`--page-template` is a PEP 292 template, e.g, an HTML or RSS file containing a `${body}` placeholder.
-
-The markdown files given by FILENAMES may have YAML frontmatter (delimited by `---` and `...`). The YAML keys may appear as placeholders in the markdown body.
-
-### 2. Generate an Index Feed
-
-```
-$ weblog make-feed --help
-Usage: weblog make-feed [OPTIONS] [FILENAMES]...
-
-  Generates an index feed from markdown files and PEP 292 templates.
+Use this command to create a blog homepage or an archive list. It iterates over the provided filenames, extracts their metadata, applies the `item-template`, and joins the results into the `items-template`.
 
 Options:
-  --site-yaml PATH       Path to the global site configuration YAML.
-  --page-template PATH   Path to a page template with a ${body} placeholder.
-  --items-template PATH  Path to a feed template with a ${items} placehoder.
-  --item-template PATH   Path to individual feed item template taking
-                         subsitutions from an item's YAML, for example,
-                         ${title}.
-  -o, --output FILENAME  Output file path (default: stdout)
-  --help                 Show this message and exit.
-```
+
+* `--site-yaml`: Path to global configuration variables
+* `--page-template`: Path to the outer template around `${body}` replaced by items
+* `--items-template`: Path to the template around `${items}`
+* `--item-template`: Path to the templater that uses markdown frontmatter (`${title}`, etc.)
+* `-o, --output-dir`: Target directory for generated HTML files
+
+## Automatic Sequential Navigation
+
+The `md2html` command binds sequential navigation variables that can be used in the body template to create "Next" and "Previous" links in a series of posts.
+
+* `${filename}`: The name of the current output file.
+* `${next_filename}`: The filename of the next item in the sequence.
+* `${previous_filename}`: The filename of the previous item in the sequence.
+
+Note: The navigation logic uses modulo arithmetic, meaning the sequence wraps around (the last item links forward to the first item, and the first item links back to the last).
+
 
 ## Example
 
-Generate a simple blog index and its corresponding pages.
+### 1. Define Source Content (`post_01.md`)
 
-Create a Metadata-rich Markdown files (e.g. `page1.md`, `page2.md`, etc.):
-
-```
+```yaml
 ---
-title: Page One
+title: Introduction to tz-weblog
 author: tzbits
-date: 2025-12-19
+date: 2026-01-13
 ...
 # ${title}
 
-This is page one.
-```
-
-Build the Site:
+Content authored by ${author}.
 
 ```
-# Generate individual HTML pages
+
+### 2. Run tz-weblog
+
+```bash
+# Generate HTML pages
 weblog md2html \
-    --site-yaml site.yaml \
-    --page-template index.in.html \
-    -o output/ \
-    *.md
+    --site-yaml config.yaml \
+    --page-template page.in.html \
+    --body-template article.in.html \
+    --output-dir ./dist \
+    content/*.md
 
 # Generate the index feed
-ls *.md | sort -r | xargs weblog make-feed \
-    --site-yaml site.yaml \
-    --page-template index.in.html \
-    --items-template items.in.html \
-    --item-template item.in.html \
-    -o output/index.html
+weblog make-feed \
+    --site-yaml config.yaml \
+    --page-template page.in.html \
+    --items-template index_wrapper.in.html \
+    --item-template index_item.in.html \
+    --output ./dist/index.html \
+    content/*.md
+
 ```
